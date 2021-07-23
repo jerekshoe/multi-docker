@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jerekshoe/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true jerekshoe/react-test npm run test
+
+after_success:
+  - docker build -t jerekshoe/multi-client ./client
+  - docker build -t jerekshoe/multi-nginx ./nginx
+  - docker build -t jerekshoe/multi-server ./server
+  - docker build -t jerekshoe/multi-worker ./worker
+
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Take images and push to dockerhub
+  - docker push jerekshoe/multi-client
+  - docker push jerekshoe/multi-nginx
+  - docker push jerekshoe/multi-server
+  - docker push jerekshoe/multi-worker
